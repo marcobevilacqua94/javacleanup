@@ -83,7 +83,7 @@ public class App {
         TransactionResult result = cluster.reactive().transactions().run((ctx) -> {
 
                     Mono<Void> firstOp = ctx.get(coll, "1")
-                            .doOnSuccess(doc -> ctx.replace(doc, jsonObject))
+                            .flatMap(doc -> ctx.replace(doc, jsonObject))
                             .onErrorResume(DocumentNotFoundException.class, (er) -> ctx.insert(coll, "1", jsonObject)).then();
 
                     Mono<Void> restOfOps = Flux.range(2, num-1)
@@ -93,8 +93,8 @@ public class App {
                                     docId -> {
                                         if (docId % 1000 == 0)
                                             System.out.println("docId: " + docId);
-                                        return ctx.get(coll, docId.toString())
-                                                .doOnSuccess(doc -> ctx.replace(doc, jsonObject))
+                                        return ctx.get(coll, docId.toString()).
+                                                flatMap(doc -> ctx.replace(doc, jsonObject))
                                                 .onErrorResume(DocumentNotFoundException.class, (er) -> ctx.insert(coll, docId.toString(), jsonObject));
                                     }
                             ).sequential().then();
