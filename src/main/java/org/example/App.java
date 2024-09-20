@@ -36,7 +36,7 @@ public class App {
         JsonObject jsonObject = JsonObject.create();
 
         jsonObject.put("body", RandomString(Integer.parseInt(args[4])));
-        boolean upsert = args[6].equals("true");
+        boolean upsert = args[8].equals("true");
         try (Cluster cluster = Cluster.connect(
                 args[0],
                 ClusterOptions.clusterOptions(args[1], args[2])
@@ -46,7 +46,7 @@ public class App {
                                     .timeout(Duration.ofSeconds(Long.parseLong(args[5])))
                                     .durabilityLevel(DurabilityLevel.NONE)
                                     .build());
-                            env.ioConfig().numKvConnections(64);
+                            env.ioConfig().numKvConnections(Integer.parseInt(args[6]));
                         })
         )
 
@@ -78,8 +78,8 @@ public class App {
         bucket.waitUntilReady(Duration.ofSeconds(10)).block();
         ReactiveCollection coll = bucket.scope("test").collection(collectionName);
 
-        int concurrency = Runtime.getRuntime().availableProcessors() * 16;
-        int parallelThreads = Runtime.getRuntime().availableProcessors() * 8;
+        int concurrency = Runtime.getRuntime().availableProcessors() * 2 * Integer.parseInt(args[7]);
+        int parallelThreads = Runtime.getRuntime().availableProcessors() * Integer.parseInt(args[7]);
         TransactionResult result = cluster.reactive().transactions().run((ctx) -> {
                             Mono<Void> firstOp;
                             if (upsert) {
