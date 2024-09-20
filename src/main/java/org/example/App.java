@@ -1,7 +1,6 @@
 package org.example;
 
 import com.couchbase.client.core.error.DocumentNotFoundException;
-import com.couchbase.client.core.msg.kv.DurabilityLevel;
 import com.couchbase.client.java.*;
 import com.couchbase.client.java.json.JsonObject;
 import com.couchbase.client.java.transactions.TransactionResult;
@@ -44,7 +43,6 @@ public class App {
                         .environment(env -> {
                             env.transactionsConfig(TransactionsConfig.builder()
                                     .timeout(Duration.ofSeconds(Long.parseLong(args[5])))
-                                    .durabilityLevel(DurabilityLevel.NONE)
                                     .build());
                             env.ioConfig().numKvConnections(Integer.parseInt(args[6]));
                         })
