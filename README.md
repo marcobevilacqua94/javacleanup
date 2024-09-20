@@ -2,7 +2,7 @@ code to test java bulk reactive transaction
 
 use it like this 
 
-java -jar JavaTest.jar localhost Administrator password 10000 500 300
+java -jar JavaTest.jar localhost Administrator password 10000 500 300 true
 
 
 localhost is the couchbase host 
@@ -16,6 +16,8 @@ password is the couchbase password
 500 is the approximate size in bytes of the document
 
 300 is the transaction timeout in seconds
+
+true means the operations will be upserts, put false (or anything else) if you want inserts
 
 have a bucket called test, with a scope called test, and two collections, one called warmup and one called test. Flush after every run
 
