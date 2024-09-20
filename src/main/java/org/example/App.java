@@ -1,5 +1,6 @@
 package org.example;
 
+import com.couchbase.client.core.error.DocumentNotFoundException;
 import com.couchbase.client.core.msg.kv.DurabilityLevel;
 import com.couchbase.client.java.*;
 import com.couchbase.client.java.json.JsonObject;
@@ -77,11 +78,13 @@ public class App {
         bucket.waitUntilReady(Duration.ofSeconds(10)).block();
         ReactiveCollection coll = bucket.scope("test").collection(collectionName);
 
-        int concurrency = Runtime.getRuntime().availableProcessors() * 24;
-        int parallelThreads = Runtime.getRuntime().availableProcessors() * 16;
+        int concurrency = Runtime.getRuntime().availableProcessors() * 16;
+        int parallelThreads = Runtime.getRuntime().availableProcessors() * 8;
         TransactionResult result = cluster.reactive().transactions().run((ctx) -> {
 
-                    Mono<Void> firstOp = ctx.insert(coll, "1", jsonObject).then();
+                    Mono<Void> firstOp = ctx.get(coll, "1")
+                            .doOnSuccess(doc -> ctx.replace(doc, jsonObject))
+                            .onErrorResume(DocumentNotFoundException.class, (er) -> ctx.insert(coll, "1", jsonObject)).then();
 
                     Mono<Void> restOfOps = Flux.range(2, num-1)
                             .parallel(concurrency)
@@ -90,7 +93,9 @@ public class App {
                                     docId -> {
                                         if (docId % 1000 == 0)
                                             System.out.println("docId: " + docId);
-                                        return ctx.insert(coll, docId.toString(), jsonObject);
+                                        return ctx.get(coll, docId.toString())
+                                                .doOnSuccess(doc -> ctx.replace(doc, jsonObject))
+                                                .onErrorResume(DocumentNotFoundException.class, (er) -> ctx.insert(coll, docId.toString(), jsonObject));
                                     }
                             ).sequential().then();
 
