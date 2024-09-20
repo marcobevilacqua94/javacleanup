@@ -7,8 +7,6 @@ import com.couchbase.client.java.transactions.config.TransactionsCleanupConfig;
 import com.couchbase.client.java.transactions.config.TransactionsConfig;
 
 import java.time.Duration;
-import java.util.List;
-
 
 /**
  * Hello world!
@@ -20,18 +18,11 @@ public class App {
                 args[0],
                 ClusterOptions.clusterOptions(args[1], args[2])
                         .environment(env -> env.transactionsConfig(TransactionsConfig
-                           //     .metadataCollection(TransactionKeyspace.create("test", "test", "test"))
-                           //     .durabilityLevel(DurabilityLevel.NONE)
-                                .timeout(Duration.ofSeconds(20))
                                 .cleanupConfig(
                                         TransactionsCleanupConfig
-                                                .cleanupClientAttempts(true)
-                                                .cleanupLostAttempts(true)
-                                                .cleanupWindow(Duration.ofSeconds(10))
-                                                .addCollections(List.of(
-                                                        TransactionKeyspace.create("test", "test", "test"),
-                                                        TransactionKeyspace.create("test", "test", "warmup")
-                                                )))))
+                                                .cleanupWindow(Duration.ofSeconds(Integer.parseInt(args[3])))
+                                                .addCollection(TransactionKeyspace.create("test"))
+                                                )))
         )
 
         ) {
@@ -41,8 +32,6 @@ public class App {
                 }
             });
             Thread.sleep(9999999999999L);
-
-
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
