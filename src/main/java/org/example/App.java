@@ -52,11 +52,9 @@ public class App {
         ) {
             bulkTransactionReactive(jsonObject, cluster, args, true);
             Thread.sleep(5000);
-            long startTime = System.nanoTime();
+
             bulkTransactionReactive(jsonObject, cluster, args, false);
-            long endTime = System.nanoTime();
-            long duration = (endTime - startTime);
-            System.out.println(duration / 1000000000 + "s");
+
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -64,7 +62,7 @@ public class App {
 
 
     public static void bulkTransactionReactive(JsonObject jsonObject, Cluster cluster, String[] args, boolean warmup) {
-
+        long startTime = System.nanoTime();
         String collectionName = "test";
         int num;
         if (warmup) {
@@ -77,7 +75,7 @@ public class App {
         bucket.waitUntilReady(Duration.ofSeconds(10)).block();
         ReactiveCollection coll = bucket.scope("test").collection(collectionName);
 
-        int concurrency = Runtime.getRuntime().availableProcessors() * 4;
+        int concurrency = Runtime.getRuntime().availableProcessors() * 12;
         int parallelThreads = Runtime.getRuntime().availableProcessors() * 4;
         TransactionResult result = cluster.reactive().transactions().run((ctx) -> {
 
@@ -108,8 +106,12 @@ public class App {
 
         if(warmup)
             System.out.println("Warmup transaction completed");
-        else
+        else {
             System.out.println("Transaction completed");
+            long endTime = System.nanoTime();
+            long duration = (endTime - startTime);
+            System.out.println(duration / 1000000000 + "s");
+        }
         try (PrintWriter writer = new PrintWriter("logs_ExtParallelUnstaging.txt")) {
             result.logs().forEach(writer::println);
         } catch (FileNotFoundException e) {
