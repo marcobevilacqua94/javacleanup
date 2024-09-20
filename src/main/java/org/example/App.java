@@ -77,8 +77,8 @@ public class App {
         bucket.waitUntilReady(Duration.ofSeconds(10)).block();
         ReactiveCollection coll = bucket.scope("test").collection(collectionName);
 
-        int concurrency = Runtime.getRuntime().availableProcessors() * 16;
-        int parallelThreads = Runtime.getRuntime().availableProcessors() * 8;
+        int concurrency = Runtime.getRuntime().availableProcessors() * 24;
+        int parallelThreads = Runtime.getRuntime().availableProcessors() * 16;
         TransactionResult result = cluster.reactive().transactions().run((ctx) -> {
 
                     Mono<Void> firstOp = ctx.insert(coll, "1", jsonObject).then();
