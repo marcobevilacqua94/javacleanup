@@ -51,8 +51,10 @@ public class App {
 
         ) {
             bulkTransactionReactive(jsonObject, cluster, args, true);
+            System.out.println("Waiting 5 secs...");
             Thread.sleep(5000);
 
+            System.out.println("Transaction Start");
             bulkTransactionReactive(jsonObject, cluster, args, false);
 
         } catch (InterruptedException e) {
@@ -75,16 +77,15 @@ public class App {
         bucket.waitUntilReady(Duration.ofSeconds(10)).block();
         ReactiveCollection coll = bucket.scope("test").collection(collectionName);
 
-        int concurrency = Runtime.getRuntime().availableProcessors() * 12;
-        int parallelThreads = Runtime.getRuntime().availableProcessors() * 4;
+        int concurrency = Runtime.getRuntime().availableProcessors() * 16;
+        int parallelThreads = Runtime.getRuntime().availableProcessors() * 8;
         TransactionResult result = cluster.reactive().transactions().run((ctx) -> {
 
                     Mono<Void> firstOp = ctx.insert(coll, "1", jsonObject).then();
 
                     Mono<Void> restOfOps = Flux.range(2, num-1)
                             .parallel(concurrency)
-                           // .runOn(Schedulers.newBoundedElastic(parallelThreads, Integer.MAX_VALUE, "bounded"))
-                            .runOn(Schedulers.newParallel("parallel", parallelThreads))
+                            .runOn(Schedulers.newBoundedElastic(parallelThreads, Integer.MAX_VALUE, "bounded"))
                             .concatMap(
                                     docId -> {
                                         if (docId % 1000 == 0)
@@ -104,13 +105,16 @@ public class App {
                 System.out.println("Transaction failed");
         }).block();
 
+        long endTime = System.nanoTime();
+        long duration = (endTime - startTime);
+
         if(warmup)
             System.out.println("Warmup transaction completed");
         else {
             System.out.println("Transaction completed");
-            long endTime = System.nanoTime();
-            long duration = (endTime - startTime);
-            System.out.println(duration / 1000000000 + "s");
+            System.out.println("Transaction time: " + duration / 1000000000 + "s");
+            System.out.println("Num of docs: " + num);
+            System.out.println("Doc size: " + args[4] + "kb");
         }
         try (PrintWriter writer = new PrintWriter("logs_ExtParallelUnstaging.txt")) {
             result.logs().forEach(writer::println);
